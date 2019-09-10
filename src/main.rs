@@ -1,7 +1,12 @@
-use std::path::{PathBuf, Path};
-use snafu::{ensure, Backtrace, ErrorCompat, ResultExt, Snafu};
+mod machine;
+mod mem;
+
+use std::path::PathBuf;
+use snafu::Snafu;
 use structopt::StructOpt;
 use std::fs::File;
+
+use machine::*;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "Chip8Forever", about = "Yet another chip8 emulator in infinite sea of those.")]
@@ -13,29 +18,18 @@ struct Options {
 
 #[derive(Debug, Snafu)]
 enum Error {
-    #[snafu(display("Could not open config from {}: {}", filename.display(), source))]
-    FileError {
-        filename: PathBuf,
-        source: std::io::Error
+    #[snafu(display("Error while attempting to load ROM"))]
+    RomError {
+        source: machine::RomError
     }
 }
 type Result<T, E = Error> = std::result::Result<T, E>;
 
-fn open_file<T: AsRef<Path>>(path: T) -> Result<std::fs::File, Error> {
-    let filename = path.as_ref();
-    let file = File::open(filename).context(FileError { filename: filename.to_path_buf() })?;
-    Ok(file)
-}
-
 fn main() -> Result<(), Error> {
     let opt = Options::from_args();
-    match open_file(opt.rom_path) {
-        Ok(file) => {
-            println!("{:?}", file)
-        }
-        Err(error) => {
-            return Err(error)
-        }
-    }
+    let rom = Rom::from_file(opt.rom_path);
+    let rom = rom.expect("Rom Error");
+    let mut machine = Machine::new(rom);
+
     Ok(())
 }
