@@ -1,17 +1,17 @@
-use std::path::{Path, PathBuf};
 use snafu::{ResultExt, Snafu};
 use std::fs::File;
 use std::io::Read;
+use std::path::{Path, PathBuf};
 
-use crate::mem::Memory;
 use crate::cpu::Cpu;
+use crate::mem::Memory;
 
 #[derive(Debug, Snafu)]
 pub enum RomError {
     #[snafu(display("Could not load ROM from file {}: {}", filename.display(), source))]
     FileError {
         filename: PathBuf,
-        source: std::io::Error
+        source: std::io::Error,
     },
 }
 #[derive(Debug)]
@@ -22,12 +22,16 @@ pub struct Rom {
 impl Rom {
     pub fn from_file<T: AsRef<Path>>(path: T) -> Result<Self, RomError> {
         let filename = path.as_ref();
-        let mut file = File::open(filename).context(FileError { filename: filename.to_path_buf() })?;
+        let mut file = File::open(filename).context(FileError {
+            filename: filename.to_path_buf(),
+        })?;
 
         let mut buffer = Vec::new();
-        file.read_to_end(&mut buffer).context(FileError { filename: filename.to_path_buf()})?;
+        file.read_to_end(&mut buffer).context(FileError {
+            filename: filename.to_path_buf(),
+        })?;
         println!("ROM size: {}", buffer.len());
-        Ok(Rom{ content: buffer })
+        Ok(Rom { content: buffer })
     }
 
     //I don't know how to return iter, so I will just return a whole vec...
@@ -37,7 +41,6 @@ impl Rom {
     }
 }
 
-
 pub struct Machine {
     memory: Memory,
     //memory: Memory
@@ -46,7 +49,7 @@ pub struct Machine {
     //display: Display
 }
 
-impl Machine{
+impl Machine {
     fn load_rom(mem: &mut Memory, rom: Rom, offset: usize) {
         let rom = rom.get_bytes();
         for (i, byte) in rom.iter().enumerate() {
@@ -70,7 +73,7 @@ impl Machine{
             0xF0, 0x80, 0x80, 0x80, 0xF0, // C
             0xE0, 0x90, 0x90, 0x90, 0xE0, // D
             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
-            0xF0, 0x80, 0xF0, 0x80, 0x80  // F
+            0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ];
         for (i, byte) in font_set.iter().enumerate() {
             mem.write_8(*byte, offset + i);
@@ -78,16 +81,14 @@ impl Machine{
     }
     pub fn new(rom: Rom) -> Machine {
         let mut mem = Memory::new();
-        Machine::load_rom(&mut mem, rom, 0x200 as usize );
+        Machine::load_rom(&mut mem, rom, 0x200 as usize);
         Machine::load_fonts(&mut mem, 0);
         let mut cpu = Cpu::new();
         cpu.reset();
         //let input_events = Input::new();
         //let display = Display::new();
         //Machine::display_reset(display); ?
-        Machine{ memory: mem }
+        Machine { memory: mem }
     }
-    pub fn run() {
-
-    }
+    pub fn run() {}
 }

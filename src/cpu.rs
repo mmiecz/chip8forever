@@ -1,7 +1,8 @@
 const REGS: usize = 16;
 const STACK_SIZE: usize = 16;
+
 pub struct Cpu {
-    regs: [u8;  REGS],
+    regs: [u8; REGS],
     i: u16,
     pc: u16,
     dt: u16,
@@ -12,7 +13,15 @@ pub struct Cpu {
 
 impl Default for Cpu {
     fn default() -> Self {
-        Cpu{ regs: [0; REGS], i: 0, pc: 0, dt: 0, st: 0, stack: [0; STACK_SIZE], sp: 0}
+        Cpu {
+            regs: [0; REGS],
+            i: 0,
+            pc: 0,
+            dt: 0,
+            st: 0,
+            stack: [0; STACK_SIZE],
+            sp: 0,
+        }
     }
 }
 
@@ -22,6 +31,9 @@ impl Cpu {
     }
 
     pub fn reset(&mut self) {
-        *self = Cpu{ pc: 0x200, .. Default::default() }
+        *self = Cpu {
+            pc: 0x200,
+            ..Default::default()
+        }
     }
 }
