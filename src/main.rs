@@ -1,10 +1,10 @@
 mod machine;
 mod mem;
+mod cpu;
 
 use std::path::PathBuf;
 use snafu::Snafu;
 use structopt::StructOpt;
-use std::fs::File;
 
 use machine::*;
 
@@ -29,7 +29,7 @@ fn main() -> Result<(), Error> {
     let opt = Options::from_args();
     let rom = Rom::from_file(opt.rom_path);
     let rom = rom.expect("Rom Error");
-    let mut machine = Machine::new(rom);
+    let mut _machine = Machine::new(rom);
 
     Ok(())
 }
