@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 snafu = "*"
 structopt = { version = "0.2", default-features = false }
+sdl2 = "*"

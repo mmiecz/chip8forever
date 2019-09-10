@@ -5,6 +5,9 @@ use std::path::{Path, PathBuf};
 
 use crate::cpu::Cpu;
 use crate::mem::Memory;
+use crate::input::InputSubsystem;
+use crate::display::DisplaySubsystem;
+use sdl2::pixels::Color;
 
 #[derive(Debug, Snafu)]
 pub enum RomError {
@@ -43,20 +46,26 @@ impl Rom {
 
 pub struct Machine {
     memory: Memory,
-    //memory: Memory
-    //cpu: Cpu
-    //input_events: Events
-    //display: Display
+    cpu: Cpu,
+    input: InputSubsystem,
+    display: DisplaySubsystem
 }
 
 impl Machine {
-    fn load_rom(mem: &mut Memory, rom: Rom, offset: usize) {
+    //TODO: Init with VideoSubSystem, SoundSubSystem, InputSubSystem, etc.
+    //TODO: Do not load ROM here.
+    pub fn new(input: InputSubsystem, display: DisplaySubsystem) -> Machine {
+        let memory = Memory::new();
+        let cpu = Cpu::new();
+        Machine { memory, cpu, input, display }
+    }
+    fn load_rom(&mut self, rom: Rom, offset: usize) {
         let rom = rom.get_bytes();
         for (i, byte) in rom.iter().enumerate() {
-            mem.write_8(*byte, offset + i);
+            self.memory.write_8(*byte, offset + i);
         }
     }
-    fn load_fonts(mem: &mut Memory, offset: usize) {
+    fn load_fonts(&mut self, offset: usize) {
         let font_set: [u8; 80] = [
             0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
             0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -76,19 +85,25 @@ impl Machine {
             0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ];
         for (i, byte) in font_set.iter().enumerate() {
-            mem.write_8(*byte, offset + i);
+            self.memory.write_8(*byte, offset + i);
         }
     }
-    pub fn new(rom: Rom) -> Machine {
-        let mut mem = Memory::new();
-        Machine::load_rom(&mut mem, rom, 0x200 as usize);
-        Machine::load_fonts(&mut mem, 0);
-        let mut cpu = Cpu::new();
-        cpu.reset();
-        //let input_events = Input::new();
-        //let display = Display::new();
-        //Machine::display_reset(display); ?
-        Machine { memory: mem }
+    pub fn init(&mut self, rom: Rom) {
+        self.load_rom(rom, 0x200);
+        self.load_fonts(0x0);
+        self.cpu.reset();
     }
-    pub fn run() {}
+
+    pub fn run(&mut self) {
+        self.display.set_color(Color::RGB(255, 255, 255));
+        loop {
+            self.input.update();
+            let keys = self.input.keys_pressed();
+            if keys.len() != 0 {
+                println!("{:#?}", keys)
+            }
+            self.display.clear();
+            self.display.update();
+        }
+    }
 }

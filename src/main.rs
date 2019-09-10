@@ -1,7 +1,10 @@
 mod cpu;
 mod machine;
 mod mem;
+mod input;
+mod display;
 
+use sdl2;
 use snafu::Snafu;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -30,7 +33,14 @@ fn main() -> Result<(), Error> {
     let opt = Options::from_args();
     let rom = Rom::from_file(opt.rom_path);
     let rom = rom.expect("Rom Error");
-    let mut _machine = Machine::new(rom);
+
+    let context = sdl2::init().unwrap();
+    let input = input::InputSubsystem::new(&context);
+    let display = display::DisplaySubsystem::new(&context, "CHIPERERE", 640, 320);
+
+    let mut machine = Machine::new(input, display);
+    machine.init(rom);
+    machine.run();
 
     Ok(())
 }
