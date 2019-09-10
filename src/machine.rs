@@ -4,9 +4,9 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use crate::cpu::Cpu;
-use crate::mem::Memory;
-use crate::input::InputSubsystem;
 use crate::display::DisplaySubsystem;
+use crate::input::InputSubsystem;
+use crate::mem::Memory;
 use sdl2::pixels::Color;
 
 #[derive(Debug, Snafu)]
@@ -48,16 +48,19 @@ pub struct Machine {
     memory: Memory,
     cpu: Cpu,
     input: InputSubsystem,
-    display: DisplaySubsystem
+    display: DisplaySubsystem,
 }
 
 impl Machine {
-    //TODO: Init with VideoSubSystem, SoundSubSystem, InputSubSystem, etc.
-    //TODO: Do not load ROM here.
     pub fn new(input: InputSubsystem, display: DisplaySubsystem) -> Machine {
         let memory = Memory::new();
         let cpu = Cpu::new();
-        Machine { memory, cpu, input, display }
+        Machine {
+            memory,
+            cpu,
+            input,
+            display,
+        }
     }
     fn load_rom(&mut self, rom: Rom, offset: usize) {
         let rom = rom.get_bytes();
@@ -99,9 +102,6 @@ impl Machine {
         loop {
             self.input.update();
             let keys = self.input.keys_pressed();
-            if keys.len() != 0 {
-                println!("{:#?}", keys)
-            }
             self.display.clear();
             self.display.update();
         }

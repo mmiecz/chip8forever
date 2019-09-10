@@ -1,7 +1,7 @@
-use sdl2::video::Window;
-use sdl2::Sdl;
 use sdl2::pixels::Color;
 use sdl2::render::WindowCanvas;
+use sdl2::video::Window;
+use sdl2::Sdl;
 
 pub struct DisplaySubsystem {
     canvas: WindowCanvas,
@@ -9,7 +9,7 @@ pub struct DisplaySubsystem {
 }
 
 impl DisplaySubsystem {
-    pub fn new(context: &Sdl, title: &str, width: u32, height: u32 ) ->  DisplaySubsystem {
+    pub fn new(context: &Sdl, title: &str, width: u32, height: u32) -> DisplaySubsystem {
         let video_subsystem = context.video().unwrap();
         let mut window = video_subsystem
             .window(title, width, height)
@@ -17,12 +17,12 @@ impl DisplaySubsystem {
             .build()
             .unwrap();
 
-        let mut canvas = window.into_canvas()
-            .present_vsync()
-            .build()
-            .unwrap();
+        let mut canvas = window.into_canvas().present_vsync().build().unwrap();
 
-        DisplaySubsystem { canvas, color: Color::RGB(0, 0, 0,) }
+        DisplaySubsystem {
+            canvas,
+            color: Color::RGB(0, 0, 0),
+        }
     }
     pub fn clear(&mut self) {
         self.canvas.clear();

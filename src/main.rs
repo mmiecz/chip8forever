@@ -1,8 +1,8 @@
 mod cpu;
+mod display;
+mod input;
 mod machine;
 mod mem;
-mod input;
-mod display;
 
 use sdl2;
 use snafu::Snafu;
