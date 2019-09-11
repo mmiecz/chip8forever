@@ -97,13 +97,31 @@ impl Machine {
         self.cpu.reset();
     }
 
+    fn should_quit(
+        &self,
+        event: &Option<sdl2::event::Event>,
+        pressed_keys: &Vec<sdl2::keyboard::Scancode>,
+    ) -> bool {
+        if let Some(sdl2::event::Event::Quit { .. }) = event {
+            return true;
+        }
+        let esc_pressed = pressed_keys
+            .iter()
+            .find(|key| **key == sdl2::keyboard::Scancode::Escape)
+            .is_some();
+        return esc_pressed;
+    }
     pub fn run(&mut self) {
-        self.display.set_color(Color::RGB(255, 255, 255));
-        loop {
-            self.input.update();
+        self.display.set_color(Color::RGB(0, 0, 0));
+        'main: loop {
+            let event = self.input.poll();
             let keys = self.input.keys_pressed();
             self.display.clear();
             self.display.update();
+
+            if self.should_quit(&event, &keys) {
+                break 'main;
+            }
         }
     }
 }
