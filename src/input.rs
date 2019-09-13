@@ -22,4 +22,16 @@ impl InputSubsystem {
         let keyboard_state = self.event_pump.keyboard_state();
         keyboard_state.pressed_scancodes().collect()
     }
+
+    pub fn wait_for_keypress(&mut self, scancode: sdl2::keyboard::Scancode) {
+        'wait: loop {
+            match self.event_pump.wait_event() {
+                Event::KeyDown { scancode: Some(code), ..} if code == scancode => {
+                    println!("{:?} keydown scancode", code);
+                    break 'wait;
+                }
+                _ => {}
+            }
+        }
+    }
 }

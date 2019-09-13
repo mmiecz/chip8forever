@@ -4,10 +4,11 @@ use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use crate::cpu::Cpu;
-use crate::display::DisplaySubsystem;
+use crate::display::{DisplaySubsystem, Sprite};
 use crate::input::InputSubsystem;
 use crate::mem::Memory;
 use sdl2::pixels::Color;
+use sdl2::keyboard::Scancode;
 
 #[derive(Debug, Snafu)]
 pub enum RomError {
@@ -116,9 +117,14 @@ impl Machine {
         'main: loop {
             let event = self.input.poll();
             let keys = self.input.keys_pressed();
-            self.display.clear();
-            self.display.update();
 
+            self.display.clear();
+            self.display.set_color(Color::RGB(255, 255, 255));
+            self.display.draw(0, 0, Sprite::new(self.memory.read_range(test*5, 5)));
+            self.display.update();
+            self.display.set_color(Color::RGB(0, 0, 0,));
+            self.input.wait_for_keypress(Scancode::Space);
+            println!("Step");
             if self.should_quit(&event, &keys) {
                 break 'main;
             }

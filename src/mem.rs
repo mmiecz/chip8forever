@@ -12,4 +12,12 @@ impl Memory {
     pub fn write_8(&mut self, b: u8, addr: usize) {
         self.data[addr] = b;
     }
+
+    pub fn read_8(&self, addr: usize) -> u8 {
+        self.data[addr]
+    }
+
+    pub fn read_range(&self, addr:usize, num: usize) -> &[u8] {
+        &self.data[addr .. addr+num]
+    }
 }

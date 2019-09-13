@@ -3,6 +3,7 @@ mod display;
 mod input;
 mod machine;
 mod mem;
+mod utils;
 
 use sdl2;
 use snafu::Snafu;
