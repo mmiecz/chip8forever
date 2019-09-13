@@ -1,13 +1,12 @@
 #![feature(fixed_size_array)]
 
+use crate::utils::BitVec;
 use sdl2::pixels::Color;
+use sdl2::rect::Rect;
 use sdl2::render::WindowCanvas;
 use sdl2::video::Window;
 use sdl2::Sdl;
-use crate::utils::BitVec;
-use std::fmt::{Formatter, Error, Debug};
-use sdl2::rect::Rect;
-use std::f32::consts::PI;
+use std::fmt::{Debug, Error, Formatter};
 
 const PIXEL_SIZE: u32 = 10;
 
@@ -31,22 +30,24 @@ impl DisplaySubsystem {
         DisplaySubsystem {
             canvas,
             color: Color::RGB(0, 0, 0),
-            pixel_buffer: PixelBuffer::new((width/PIXEL_SIZE) as usize, (height/PIXEL_SIZE) as usize),
+            pixel_buffer: PixelBuffer::new(
+                (width / PIXEL_SIZE) as usize,
+                (height / PIXEL_SIZE) as usize,
+            ),
         }
     }
 
     pub fn clear(&mut self) {
-        self.pixel_buffer.clear();
         self.canvas.clear();
     }
     // Draw current pixel buffer to the screen!
     pub fn update(&mut self) {
+        self.pixel_buffer.draw_on_canvas(&mut self.canvas);
         self.canvas.present();
     }
 
     pub fn draw(&mut self, column: usize, row: usize, sprite: Sprite) -> bool {
         let collision = self.pixel_buffer.add_sprite(column, row, sprite);
-        self.pixel_buffer.draw_on_canvas(&mut self.canvas);
         collision
     }
 
@@ -62,28 +63,44 @@ struct PixelBuffer {
     columns: usize,
     rows: usize,
 }
+
 impl PixelBuffer {
     fn new(columns: usize, rows: usize) -> PixelBuffer {
-        PixelBuffer{ pixels: vec![vec![false; columns]; rows], columns, rows}
+        PixelBuffer {
+            pixels: vec![vec![false; columns]; rows],
+            columns,
+            rows,
+        }
     }
     fn add_sprite(&mut self, column: usize, row: usize, sprite: Sprite) -> bool {
         let mut collision = false;
         for pixel in sprite.into_iter() {
             let (pixel_x, pixel_y) = pixel;
-            let (pos_x, pos_y) = ((pixel_x + column) % self.columns, ((pixel_y + row) % self.rows));
+            let (pos_x, pos_y) = (
+                (pixel_x + column) % self.columns,
+                ((pixel_y + row) % self.rows),
+            );
             self.pixels[pos_y][pos_x] ^= true;
             collision |= !self.pixels[pos_y][pos_x];
         }
+        println!("add_sprite");
+        println!("{:?}", &self);
+        println!("add_sprite end");
         collision
     }
 
     fn draw_on_canvas(&mut self, canvas: &mut WindowCanvas) {
-        println!("{:?}", &self);
+        //println!("{:?}", &self);
         let mut rects: Vec<Rect> = Vec::new();
-        for (j,row) in self.pixels.iter().enumerate() {
-            for (i,column) in row.into_iter().enumerate() {
+        for (j, row) in self.pixels.iter().enumerate() {
+            for (i, column) in row.into_iter().enumerate() {
                 if *column == true {
-                    let rect = Rect::new((i * PIXEL_SIZE as usize) as i32, (j * PIXEL_SIZE as usize) as i32, PIXEL_SIZE, PIXEL_SIZE);
+                    let rect = Rect::new(
+                        (i * PIXEL_SIZE as usize) as i32,
+                        (j * PIXEL_SIZE as usize) as i32,
+                        PIXEL_SIZE,
+                        PIXEL_SIZE,
+                    );
                     rects.push(rect);
                 }
             }
@@ -92,7 +109,7 @@ impl PixelBuffer {
     }
 
     fn clear(&mut self) {
-        self.pixels = vec![vec![false;self.columns];self.rows];
+        self.pixels = vec![vec![false; self.columns]; self.rows];
     }
 }
 
@@ -124,25 +141,24 @@ impl Sprite {
         let bits = BitVec::from_bytes(&bytes);
         let mut row = 0;
         for line in bits.as_slice().chunks(8) {
-            for (col,bit) in line.into_iter().enumerate() {
+            for (col, bit) in line.into_iter().enumerate() {
                 if *bit == true {
                     pixels_on.push((col, row));
                 }
             }
             row += 1;
         }
-        Sprite{pixels_on}
+        Sprite { pixels_on }
     }
-    pub fn pixels(&self) -> Vec<(usize,usize)> {
+    pub fn pixels(&self) -> Vec<(usize, usize)> {
         self.pixels_on.clone()
     }
 }
 
-
 //Sprite is a collection of visible pixels positions relative to the beginning of the sprite (0, 0)
 impl IntoIterator for Sprite {
     type Item = (usize, usize);
-    type IntoIter = std::vec::IntoIter<(usize,usize)>;
+    type IntoIter = std::vec::IntoIter<(usize, usize)>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.pixels_on.into_iter()

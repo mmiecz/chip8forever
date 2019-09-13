@@ -1,3 +1,7 @@
+use crate::display::DisplaySubsystem;
+use crate::input::InputSubsystem;
+use crate::mem::Memory;
+
 const REGS: usize = 16;
 const STACK_SIZE: usize = 16;
 
@@ -35,5 +39,14 @@ impl Cpu {
             pc: 0x200,
             ..Default::default()
         }
+    }
+
+    pub fn step(
+        &mut self,
+        memory: &mut Memory,
+        display: &mut DisplaySubsystem,
+        input: &InputSubsystem,
+    ) {
+        let instruction = memory.read_range(self.pc, 2);
     }
 }

@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 const MEM_SIZE: usize = 4096;
 pub struct Memory {
     data: [u8; MEM_SIZE],
@@ -9,15 +11,15 @@ impl Memory {
             data: [0; MEM_SIZE],
         }
     }
-    pub fn write_8(&mut self, b: u8, addr: usize) {
-        self.data[addr] = b;
+    pub fn write_8(&mut self, b: u8, addr: u16) {
+        self.data[addr as usize] = b;
     }
 
-    pub fn read_8(&self, addr: usize) -> u8 {
-        self.data[addr]
+    pub fn read_8(&self, addr: u16) -> u8 {
+        self.data[addr as usize]
     }
 
-    pub fn read_range(&self, addr:usize, num: usize) -> &[u8] {
-        &self.data[addr .. addr+num]
+    pub fn read_range(&self, addr: u16, num: u16) -> &[u8] {
+        &self.data[addr as usize..(addr + num) as usize]
     }
 }

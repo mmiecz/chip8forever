@@ -7,8 +7,8 @@ use crate::cpu::Cpu;
 use crate::display::{DisplaySubsystem, Sprite};
 use crate::input::InputSubsystem;
 use crate::mem::Memory;
-use sdl2::pixels::Color;
 use sdl2::keyboard::Scancode;
+use sdl2::pixels::Color;
 
 #[derive(Debug, Snafu)]
 pub enum RomError {
@@ -63,13 +63,13 @@ impl Machine {
             display,
         }
     }
-    fn load_rom(&mut self, rom: Rom, offset: usize) {
+    fn load_rom(&mut self, rom: Rom, offset: u16) {
         let rom = rom.get_bytes();
         for (i, byte) in rom.iter().enumerate() {
-            self.memory.write_8(*byte, offset + i);
+            self.memory.write_8(*byte, offset + i as u16);
         }
     }
-    fn load_fonts(&mut self, offset: usize) {
+    fn load_fonts(&mut self, offset: u16) {
         let font_set: [u8; 80] = [
             0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
             0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -89,7 +89,7 @@ impl Machine {
             0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ];
         for (i, byte) in font_set.iter().enumerate() {
-            self.memory.write_8(*byte, offset + i);
+            self.memory.write_8(*byte, offset + i as u16);
         }
     }
     pub fn init(&mut self, rom: Rom) {
@@ -118,11 +118,11 @@ impl Machine {
             let event = self.input.poll();
             let keys = self.input.keys_pressed();
 
+            self.display.set_color(Color::RGB(0, 0, 0));
             self.display.clear();
+
             self.display.set_color(Color::RGB(255, 255, 255));
-            self.display.draw(0, 0, Sprite::new(self.memory.read_range(test*5, 5)));
             self.display.update();
-            self.display.set_color(Color::RGB(0, 0, 0,));
             self.input.wait_for_keypress(Scancode::Space);
             println!("Step");
             if self.should_quit(&event, &keys) {
