@@ -89,7 +89,7 @@ impl Machine {
             0xF0, 0x80, 0xF0, 0x80, 0x80, // F
         ];
         for (i, byte) in font_set.iter().enumerate() {
-            self.memory.write_8(*byte, offset + i as u16);
+            self.memory.write_8(*byte, offset + i as u16); // TODO: pass this offset somewhere to the MEMORY?
         }
     }
     pub fn init(&mut self, rom: Rom) {

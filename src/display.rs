@@ -37,6 +37,7 @@ impl DisplaySubsystem {
         }
     }
 
+    //TODO: BUG PixelBuffer is not cleared here!
     pub fn clear(&mut self) {
         self.canvas.clear();
     }
