@@ -1,6 +1,6 @@
 use sdl2::event::Event;
-use sdl2::EventPump;
 use sdl2::keyboard::Scancode;
+use sdl2::EventPump;
 use std::iter::Scan;
 
 pub struct InputSubsystem {
@@ -52,7 +52,7 @@ A	0	B	F       z x c v
 
  */
 impl KeyboardMapper {
-    pub fn map_to_scancode( keycode: u8) -> Option<sdl2::keyboard::Scancode> {
+    pub fn map_to_scancode(keycode: u8) -> Option<sdl2::keyboard::Scancode> {
         match keycode {
             0x0 => Some(Scancode::X),
             0x1 => Some(Scancode::Num1),
@@ -70,7 +70,7 @@ impl KeyboardMapper {
             0xD => Some(Scancode::R),
             0xE => Some(Scancode::F),
             0xF => Some(Scancode::V),
-            _ => None
+            _ => None,
         }
     }
 }

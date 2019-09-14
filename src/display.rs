@@ -59,7 +59,7 @@ impl DisplaySubsystem {
         let collision = self.pixel_buffer.add_sprite(column, row, sprite);
         self.pixel_buffer.draw_on_canvas(&mut self.canvas);
         self.canvas.present();
-        self.set_color(Color::RGB(0, 0, 0,));
+        self.set_color(Color::RGB(0, 0, 0));
         collision
     }
 

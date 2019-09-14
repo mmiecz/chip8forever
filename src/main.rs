@@ -1,10 +1,10 @@
+mod audio;
 mod cpu;
 mod display;
 mod input;
 mod machine;
 mod mem;
 mod utils;
-mod audio;
 
 use sdl2;
 use snafu::Snafu;

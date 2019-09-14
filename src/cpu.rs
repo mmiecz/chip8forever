@@ -1,32 +1,32 @@
+use crate::audio::AudioSubsystem;
 use crate::display::{DisplaySubsystem, Sprite};
 use crate::input::{InputSubsystem, KeyboardMapper};
 use crate::mem::Memory;
-use crate::audio::AudioSubsystem;
-use sdl2::hint::set_video_minimize_on_focus_loss;
 use sdl2::audio::AudioStatus;
+use sdl2::hint::set_video_minimize_on_focus_loss;
 
 const REGS: usize = 16;
 const STACK_SIZE: usize = 16;
 
 mod helper {
-    pub fn nibbles( bytes: &[u8]) -> (u8, u8, u8, u8) {
+    pub fn nibbles(bytes: &[u8]) -> (u8, u8, u8, u8) {
         assert!(bytes.len() == 2);
-        let o1 = ( bytes[0] & 0xF0 ) >> 4;
-        let o2 = ( bytes[0] & 0x0F );
+        let o1 = (bytes[0] & 0xF0) >> 4;
+        let o2 = (bytes[0] & 0x0F);
 
-        let o3 = ( bytes[1] & 0xF0 ) >> 4;
-        let o4 = ( bytes[1] & 0x0F );
+        let o3 = (bytes[1] & 0xF0) >> 4;
+        let o4 = (bytes[1] & 0x0F);
         (o1, o2, o3, o4)
     }
 
     pub fn address(bytes: &[u8]) -> u16 {
-        let address: u16 = ((( bytes[0] & 0x0F ) as u16) << 8 ) as u16 + bytes[1] as u16;
+        let address: u16 = (((bytes[0] & 0x0F) as u16) << 8) as u16 + bytes[1] as u16;
         address
     }
 
     #[cfg(test)]
     mod test {
-        use crate::cpu::helper::{nibbles, address};
+        use crate::cpu::helper::{address, nibbles};
 
         #[test]
         fn to_nibbles_test() {
@@ -83,8 +83,7 @@ impl Cpu {
     fn handle_beeper(&mut self, audio: &mut AudioSubsystem) {
         if self.st > 1 && audio.get_status() != AudioStatus::Playing {
             audio.resume();
-        }
-        else if self.st < 1 {
+        } else if self.st < 1 {
             audio.pause();
         }
     }
@@ -96,7 +95,10 @@ impl Cpu {
         audio: &mut AudioSubsystem,
     ) {
         let instruction = memory.read_range(self.pc, 2);
-        println!("Doing: {:X?} @ pc: {:X?} dt: {}", instruction, self.pc, self.dt);
+        println!(
+            "Doing: {:X?} @ pc: {:X?} dt: {}",
+            instruction, self.pc, self.dt
+        );
         self.pc_increment();
         let (o1, o2, o3, o4) = helper::nibbles(instruction);
         let reg1 = o2;
@@ -127,7 +129,7 @@ impl Cpu {
             (0xA, _, _, _) => self.move_i(address),
             (0xB, _, _, _) => self.jump_with_add(address),
             (0xC, reg, _, _) => self.rnd(reg, value),
-            (0xD, r1, r2,n) => self.draw(r1, r2, n, memory, display),
+            (0xD, r1, r2, n) => self.draw(r1, r2, n, memory, display),
             (0xE, reg, 0x9, 0xE) => self.skip_key_pressed(reg, input),
             (0xE, reg, 0xA, 0x1) => self.skip_key_not_pressed(reg, input),
             (0xF, reg, 0x0, 0x7) => self.get_dt(reg),
@@ -283,8 +285,7 @@ impl Cpu {
         self.reg_set(reg1, result.0);
         if result.1 == true {
             self.flag_set(1);
-        }
-        else {
+        } else {
             self.flag_set(0);
         }
     }
@@ -297,8 +298,7 @@ impl Cpu {
         self.reg_set(reg1, result.0);
         if result.1 == false {
             self.flag_set(1);
-        }
-        else {
+        } else {
             self.flag_set(0);
         }
     }
@@ -319,11 +319,9 @@ impl Cpu {
         self.reg_set(reg1, result.0);
         if result.1 == false {
             self.flag_set(1);
-        }
-        else {
+        } else {
             self.flag_set(0);
         }
-
     }
 
     //Shift left. Most significant bit is stored in VF
@@ -357,7 +355,14 @@ impl Cpu {
     }
 
     //Draw [HEIGHT] bytes at (reg1, reg2) position. VF = 1 if there is a collision.
-    fn draw(&mut self, reg1: u8, reg2: u8, height: u8, mem: &Memory, display: &mut DisplaySubsystem) {
+    fn draw(
+        &mut self,
+        reg1: u8,
+        reg2: u8,
+        height: u8,
+        mem: &Memory,
+        display: &mut DisplaySubsystem,
+    ) {
         let mem = mem.read_range(self.i, height as u16);
         let sprite = Sprite::new(mem);
         let column = self.reg_get(reg1) as usize;
@@ -366,8 +371,7 @@ impl Cpu {
         let collision = display.draw_test(column, row, sprite);
         if collision == true {
             self.flag_set(1);
-        }
-        else {
+        } else {
             self.flag_set(0);
         }
     }
@@ -375,7 +379,7 @@ impl Cpu {
     //Skip if key from REG is pressed.
     fn skip_key_pressed(&mut self, reg: u8, input: &InputSubsystem) {
         let keycode = self.reg_get(reg);
-        KeyboardMapper::map_to_scancode(keycode).and_then::<(), _>( | keycode| {
+        KeyboardMapper::map_to_scancode(keycode).and_then::<(), _>(|keycode| {
             if input.is_key_pressed(keycode) == true {
                 self.pc_increment(); // Key pressed, advance.
             }
@@ -386,7 +390,7 @@ impl Cpu {
     //Skip if key from reg is NOT pressed
     fn skip_key_not_pressed(&mut self, reg: u8, input: &InputSubsystem) {
         let keycode = self.reg_get(reg);
-        KeyboardMapper::map_to_scancode(keycode).and_then::<(), _>( | keycode| {
+        KeyboardMapper::map_to_scancode(keycode).and_then::<(), _>(|keycode| {
             if input.is_key_pressed(keycode) == false {
                 self.pc_increment(); // Key pressed, advance.
             }
@@ -403,9 +407,9 @@ impl Cpu {
     //Wait for key and load it to reg
     fn wait_for_key(&mut self, reg: u8, input: &mut InputSubsystem) {
         unimplemented!()
-//        let keycode = self.reg_get(reg);
-//        assert!(keycode < 16, "Keycode value somewhat wrong!");
-//        input.wait_for_keypress(KeyboardMapper::map_to_scancode(keycode).unwrap());
+        //        let keycode = self.reg_get(reg);
+        //        assert!(keycode < 16, "Keycode value somewhat wrong!");
+        //        input.wait_for_keypress(KeyboardMapper::map_to_scancode(keycode).unwrap());
     }
 
     //Set DT value from REG
@@ -469,5 +473,4 @@ impl Cpu {
         }
         self.i += 1;
     }
-
 }

@@ -3,13 +3,13 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
+use crate::audio::AudioSubsystem;
 use crate::cpu::Cpu;
 use crate::display::{DisplaySubsystem, Sprite};
 use crate::input::InputSubsystem;
 use crate::mem::Memory;
 use sdl2::keyboard::Scancode;
 use sdl2::pixels::Color;
-use crate::audio::AudioSubsystem;
 
 #[derive(Debug, Snafu)]
 pub enum RomError {
@@ -51,7 +51,7 @@ pub struct Machine {
     cpu: Cpu,
     input: InputSubsystem,
     display: DisplaySubsystem,
-    audio: AudioSubsystem
+    audio: AudioSubsystem,
 }
 
 impl Machine {
@@ -121,7 +121,12 @@ impl Machine {
             let event = self.input.poll();
             let keys = self.input.keys_pressed();
 
-            self.cpu.step(&mut self.memory, &mut self.display, &mut self.input, &mut self.audio);
+            self.cpu.step(
+                &mut self.memory,
+                &mut self.display,
+                &mut self.input,
+                &mut self.audio,
+            );
             //self.input.wait_for_keypress(Scancode::Space);
             println!("Step");
             if self.should_quit(&event, &keys) {

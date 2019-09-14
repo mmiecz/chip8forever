@@ -1,10 +1,10 @@
+use sdl2::audio::{AudioCallback, AudioSpecDesired, AudioStatus};
 use sdl2::Sdl;
-use sdl2::audio::{AudioSpecDesired, AudioCallback, AudioStatus};
 
 struct SquareWave {
     phase_inc: f32,
     phase: f32,
-    volume: f32
+    volume: f32,
 }
 
 impl AudioCallback for SquareWave {
@@ -12,12 +12,15 @@ impl AudioCallback for SquareWave {
 
     fn callback(&mut self, out: &mut [Self::Channel]) {
         for x in out.iter_mut() {
-            *x = if self.phase <= 0.5 { self.volume } else { -self.volume };
+            *x = if self.phase <= 0.5 {
+                self.volume
+            } else {
+                -self.volume
+            };
             self.phase = (self.phase + self.phase_inc) % 1.0;
         }
     }
 }
-
 
 pub struct AudioSubsystem {
     device: sdl2::audio::AudioDevice<SquareWave>,
@@ -30,20 +33,22 @@ impl AudioSubsystem {
         //Default audio spec.
         let desired_spec = AudioSpecDesired {
             freq: Some(44_100),
-            channels: Some(1),  // mono
-            samples: None       // default sample size
+            channels: Some(1), // mono
+            samples: None,     // default sample size
         };
 
-        let device = sdl2_audio.open_playback(None, &desired_spec, |spec|{
-            println!("{:?}", spec);
-            SquareWave {
-                phase_inc: 440.0 / spec.freq as f32,
-                phase: 0.0,
-                volume: 0.25
-            }
-        }).unwrap(); // No error handling :(
+        let device = sdl2_audio
+            .open_playback(None, &desired_spec, |spec| {
+                println!("{:?}", spec);
+                SquareWave {
+                    phase_inc: 440.0 / spec.freq as f32,
+                    phase: 0.0,
+                    volume: 0.25,
+                }
+            })
+            .unwrap(); // No error handling :(
 
-        AudioSubsystem{ device }
+        AudioSubsystem { device }
     }
 
     pub fn resume(&mut self) {
