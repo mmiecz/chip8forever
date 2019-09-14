@@ -39,6 +39,7 @@ impl DisplaySubsystem {
 
     //TODO: BUG PixelBuffer is not cleared here!
     pub fn clear(&mut self) {
+        self.pixel_buffer.clear();
         self.canvas.clear();
     }
     // Draw current pixel buffer to the screen!

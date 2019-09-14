@@ -4,6 +4,7 @@ mod input;
 mod machine;
 mod mem;
 mod utils;
+mod audio;
 
 use sdl2;
 use snafu::Snafu;
@@ -38,8 +39,9 @@ fn main() -> Result<(), Error> {
     let context = sdl2::init().unwrap();
     let input = input::InputSubsystem::new(&context);
     let display = display::DisplaySubsystem::new(&context, "CHIPERERE", 640, 320);
+    let audio = audio::AudioSubsystem::new(&context);
 
-    let mut machine = Machine::new(input, display);
+    let mut machine = Machine::new(input, display, audio);
     machine.init(rom);
     machine.run();
 

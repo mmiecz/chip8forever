@@ -1,6 +1,9 @@
 use crate::display::{DisplaySubsystem, Sprite};
 use crate::input::{InputSubsystem, KeyboardMapper};
 use crate::mem::Memory;
+use crate::audio::AudioSubsystem;
+use sdl2::hint::set_video_minimize_on_focus_loss;
+use sdl2::audio::AudioStatus;
 
 const REGS: usize = 16;
 const STACK_SIZE: usize = 16;
@@ -41,6 +44,7 @@ mod helper {
         }
     }
 }
+
 pub struct Cpu {
     regs: [u8; REGS],
     i: u16,
@@ -76,20 +80,29 @@ impl Cpu {
             ..Default::default()
         }
     }
-
+    fn handle_beeper(&mut self, audio: &mut AudioSubsystem) {
+        if self.st > 1 && audio.get_status() != AudioStatus::Playing {
+            audio.resume();
+        }
+        else if self.st < 1 {
+            audio.pause();
+        }
+    }
     pub fn step(
         &mut self,
         memory: &mut Memory,
         display: &mut DisplaySubsystem,
         input: &mut InputSubsystem,
+        audio: &mut AudioSubsystem,
     ) {
         let instruction = memory.read_range(self.pc, 2);
+        println!("Doing: {:X?} @ pc: {:X?} dt: {}", instruction, self.pc, self.dt);
+        self.pc_increment();
         let (o1, o2, o3, o4) = helper::nibbles(instruction);
         let reg1 = o2;
         let reg2 = o3;
         let address = helper::address(instruction);
         let value = (instruction[1] & 0xFF) as u8;
-        println!("{:x?}", instruction);
 
         match (o1, o2, o3, o4) {
             (0x0, 0x0, 0xE, 0x0) => self.clear_screen(display),
@@ -128,8 +141,27 @@ impl Cpu {
             (0xF, reg, 0x6, 0x5) => self.load_range(reg, memory),
             _ => panic!("WTF: wrong instruction"),
         }
+        self.dt_decrement();
+        self.st_decrement();
 
-        self.pc += 2; // TODO: Move pc access to some function
+        self.handle_beeper(audio);
+    }
+    //PC DT and ST routines.
+    fn pc_increment(&mut self) {
+        self.pc += 2;
+        println!("PC: increment: {:x?}", self.pc);
+    }
+
+    fn dt_decrement(&mut self) {
+        if self.dt > 0 {
+            self.dt -= 1;
+        }
+    }
+
+    fn st_decrement(&mut self) {
+        if self.st > 0 {
+            self.st -= 1;
+        }
     }
 
     //Stack push and pop
@@ -190,21 +222,21 @@ impl Cpu {
     fn skip_equal(&mut self, reg: u8, val: u8) {
         if self.reg_get(reg) == val {
             // TODO: Figure out better pc handling.
-            self.pc += 2;
+            self.pc_increment();
         }
     }
 
     //Skip if not equal
     fn skip_not_equal(&mut self, reg: u8, val: u8) {
         if self.reg_get(reg) != val {
-            self.pc += 2;
+            self.pc_increment();
         }
     }
 
     //Skip if 2 regs are equal
     fn skip_regs_equal(&mut self, reg1: u8, reg2: u8) {
         if self.reg_get(reg1) == self.reg_get(reg2) {
-            self.pc += 2;
+            self.pc_increment();
         }
     }
 
@@ -252,6 +284,9 @@ impl Cpu {
         if result.1 == true {
             self.flag_set(1);
         }
+        else {
+            self.flag_set(0);
+        }
     }
 
     //Vx = Vx - Vy, set VF = NOT borrow. Set VF if Vx > Vy
@@ -262,6 +297,9 @@ impl Cpu {
         self.reg_set(reg1, result.0);
         if result.1 == false {
             self.flag_set(1);
+        }
+        else {
+            self.flag_set(0);
         }
     }
 
@@ -282,6 +320,9 @@ impl Cpu {
         if result.1 == false {
             self.flag_set(1);
         }
+        else {
+            self.flag_set(0);
+        }
 
     }
 
@@ -295,7 +336,7 @@ impl Cpu {
     //Skip next instruction if Vx != Vy.
     fn skip_not_regs_equal(&mut self, reg1: u8, reg2: u8) {
         if self.reg_get(reg1) != self.reg_get(reg2) {
-            self.pc += 2;
+            self.pc_increment();
         }
     }
 
@@ -321,9 +362,13 @@ impl Cpu {
         let sprite = Sprite::new(mem);
         let column = self.reg_get(reg1) as usize;
         let row = self.reg_get(reg2) as usize;
+        println!("DRAW");
         let collision = display.draw_test(column, row, sprite);
         if collision == true {
             self.flag_set(1);
+        }
+        else {
+            self.flag_set(0);
         }
     }
 
@@ -332,7 +377,7 @@ impl Cpu {
         let keycode = self.reg_get(reg);
         KeyboardMapper::map_to_scancode(keycode).and_then::<(), _>( | keycode| {
             if input.is_key_pressed(keycode) == true {
-                self.pc += 2; // Key pressed, advance.
+                self.pc_increment(); // Key pressed, advance.
             }
             Some(()) // Make typesystem happy;
         });
@@ -343,7 +388,7 @@ impl Cpu {
         let keycode = self.reg_get(reg);
         KeyboardMapper::map_to_scancode(keycode).and_then::<(), _>( | keycode| {
             if input.is_key_pressed(keycode) == false {
-                self.pc += 2; // Key pressed, advance.
+                self.pc_increment(); // Key pressed, advance.
             }
             Some(()) // Make typesystem happy;
         });
@@ -351,6 +396,7 @@ impl Cpu {
 
     //Place DT value into REG
     fn get_dt(&mut self, reg: u8) {
+        println!("get_dt: {:X?} {:X?}", reg, self.dt);
         self.reg_set(reg, self.dt);
     }
 
@@ -364,6 +410,7 @@ impl Cpu {
 
     //Set DT value from REG
     fn set_dt(&mut self, reg: u8) {
+        println!("set_dt: val: {:X?}", self.reg_get(reg));
         self.dt = self.reg_get(reg);
     }
 

@@ -9,6 +9,7 @@ use crate::input::InputSubsystem;
 use crate::mem::Memory;
 use sdl2::keyboard::Scancode;
 use sdl2::pixels::Color;
+use crate::audio::AudioSubsystem;
 
 #[derive(Debug, Snafu)]
 pub enum RomError {
@@ -50,10 +51,11 @@ pub struct Machine {
     cpu: Cpu,
     input: InputSubsystem,
     display: DisplaySubsystem,
+    audio: AudioSubsystem
 }
 
 impl Machine {
-    pub fn new(input: InputSubsystem, display: DisplaySubsystem) -> Machine {
+    pub fn new(input: InputSubsystem, display: DisplaySubsystem, audio: AudioSubsystem) -> Machine {
         let memory = Memory::new();
         let cpu = Cpu::new();
         Machine {
@@ -61,6 +63,7 @@ impl Machine {
             cpu,
             input,
             display,
+            audio,
         }
     }
     fn load_rom(&mut self, rom: Rom, offset: u16) {
@@ -118,9 +121,8 @@ impl Machine {
             let event = self.input.poll();
             let keys = self.input.keys_pressed();
 
-            self.cpu.step(&mut self.memory, &mut self.display, &mut self.input);
-
-            self.input.wait_for_keypress(Scancode::Space);
+            self.cpu.step(&mut self.memory, &mut self.display, &mut self.input, &mut self.audio);
+            //self.input.wait_for_keypress(Scancode::Space);
             println!("Step");
             if self.should_quit(&event, &keys) {
                 break 'main;
