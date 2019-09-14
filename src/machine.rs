@@ -118,11 +118,8 @@ impl Machine {
             let event = self.input.poll();
             let keys = self.input.keys_pressed();
 
-            self.display.set_color(Color::RGB(0, 0, 0));
-            self.display.clear();
+            self.cpu.step(&mut self.memory, &mut self.display, &mut self.input);
 
-            self.display.set_color(Color::RGB(255, 255, 255));
-            self.display.update();
             self.input.wait_for_keypress(Scancode::Space);
             println!("Step");
             if self.should_quit(&event, &keys) {

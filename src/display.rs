@@ -52,6 +52,16 @@ impl DisplaySubsystem {
         collision
     }
 
+    pub fn draw_test(&mut self, column: usize, row: usize, sprite: Sprite) -> bool {
+        self.canvas.clear();
+        self.set_color(Color::RGB(255, 255, 255));
+        let collision = self.pixel_buffer.add_sprite(column, row, sprite);
+        self.pixel_buffer.draw_on_canvas(&mut self.canvas);
+        self.canvas.present();
+        self.set_color(Color::RGB(0, 0, 0,));
+        collision
+    }
+
     pub fn set_color(&mut self, color: Color) {
         self.color = color;
         self.canvas.set_draw_color(self.color);
