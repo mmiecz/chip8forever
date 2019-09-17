@@ -96,8 +96,8 @@ impl Cpu {
     ) {
         let instruction = memory.read_range(self.pc, 2);
         println!(
-            "Doing: {:X?} @ pc: {:X?} dt: {}",
-            instruction, self.pc, self.dt
+            "Doing: {:X?} @ pc: {:X?} dt: {} st: {}",
+            instruction, self.pc, self.dt, self.st
         );
         self.pc_increment();
         let (o1, o2, o3, o4) = helper::nibbles(instruction);
@@ -125,7 +125,7 @@ impl Cpu {
             (0x8, r1, r2, 6) => self.shift_right(r1, r2),
             (0x8, r1, r2, 7) => self.sub_regs_2(r1, r2),
             (0x8, r1, r2, 0xE) => self.shift_left(r1, r2),
-            (0x9, r1, r2, 0x0) => self.skip_not_equal(r1, r2),
+            (0x9, r1, r2, 0x0) => self.skip_not_regs_equal(r1, r2),
             (0xA, _, _, _) => self.move_i(address),
             (0xB, _, _, _) => self.jump_with_add(address),
             (0xC, reg, _, _) => self.rnd(reg, value),
@@ -436,20 +436,11 @@ impl Cpu {
     }
 
     //Store three digits in I I+1 I+2
-    //TODO: Should this instruction modify I directly?
     fn bcd(&mut self, reg: u8, memory: &mut Memory) {
         let mut value = self.reg_get(reg);
-        let mut digits = Vec::new(); // max value is 3 digits;
-        while value > 0 {
-            let digit = value % 10;
-            value /= 10;
-            digits.push(digit);
-        }
-        let mut i: u16 = 0;
-        while let Some(digit) = digits.pop() {
-            let address = self.i + i;
-            memory.write_8(digit, address);
-        }
+        memory.write_8( ( value ) / 100, self.i);
+        memory.write_8( ( value / 10 ) % 10, self.i + 1);
+        memory.write_8( ( value ) % 10, self.i + 2);
     }
 
     //Store all registers from V[0] to V[REG] starting from I.
@@ -459,7 +450,7 @@ impl Cpu {
             let regval = self.reg_get(i);
             self.i += i as u16;
             let addr = self.i;
-            memory.write_8(reg, addr);
+            memory.write_8(regval, addr);
         }
         self.i += 1;
     }
